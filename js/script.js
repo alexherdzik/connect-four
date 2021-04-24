@@ -9,19 +9,22 @@ const Player = (id, color) => {
     const getColor = () => {
         return _color;
     }
-    return {getId, getColor};
+    return {
+        getId,
+        getColor
+    };
 };
 
 const gameboard = (() => {
     //const _board = Array(Array(6), Array(6), Array(6), Array(6), Array(6), Array(6), Array(6));
     const _board = [
-        [0,0,0,0,0,0],
-        [0,0,0,0,0,0],
-        [0,0,0,0,0,0],
-        [0,0,0,0,0,0],
-        [0,0,0,0,0,0],
-        [0,0,0,0,0,0],
-        [0,0,0,0,0,0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0],
     ]
     const getBoard = () => {
         return _board;
@@ -36,22 +39,31 @@ const gameboard = (() => {
         _board[column][row] = player.getId();
     };
 
-    return {getBoard, isColumnFull, markSpace};
+    return {
+        getBoard,
+        isColumnFull,
+        markSpace
+    };
 })();
 
 const view = (() => {
     const _gameboard = document.getElementById('gameboard');
-    const spaces = _gameboard.querySelectorAll('.space');
+    const columns = _gameboard.querySelectorAll('.column');
 
     const update = (gameboard, map) => {
         gameboard.getBoard().forEach((column, colIndex) => {
             column.forEach((row, rowIndex) => {
-                if (map.has(row)) spaces[(rowIndex * 7 + colIndex)].style.backgroundColor = map.get(row);
+                if (map.has(row)) {
+                    columns[colIndex].querySelectorAll('.space')[rowIndex].style.backgroundColor = map.get(row);
+                }
             });
         });
     };
 
-    return {spaces, update};
+    return {
+        columns,
+        update
+    };
 })();
 
 const controller = ((gameboard, view) => {
@@ -72,12 +84,16 @@ const controller = ((gameboard, view) => {
         //console.log(column);
     }
 
-    return {play};
+    return {
+        play
+    };
 })(gameboard, view);
 
 //Event Handlers
-view.spaces.forEach((space, index) => {
-    space.addEventListener('click', () => {
-        controller.play(index % 7);
+view.columns.forEach((column, index) => {
+    column.querySelectorAll('.space').forEach(space => {
+        space.addEventListener('click', () => {
+            controller.play(index);
+        });
     });
 });
