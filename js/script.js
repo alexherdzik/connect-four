@@ -39,10 +39,19 @@ const gameboard = (() => {
         _board[column][row] = player.getId();
     };
 
+    const reset = () => {
+        for (let column = 0; column < _board.length; column++) {
+            for (let row = 0; row < _board[column].length; row++) {
+                _board[column][row] = 0;
+            }
+        }
+    }
+
     return {
         getBoard,
         isColumnFull,
-        markSpace
+        markSpace,
+        reset
     };
 })();
 
@@ -53,9 +62,7 @@ const view = (() => {
     const update = (gameboard, map) => {
         gameboard.getBoard().forEach((column, colIndex) => {
             column.forEach((row, rowIndex) => {
-                if (map.has(row)) {
-                    columns[colIndex].querySelectorAll('.space')[rowIndex].style.backgroundColor = map.get(row);
-                }
+                columns[colIndex].querySelectorAll('.space')[rowIndex].style.backgroundColor = map.has(row) ? map.get(row) : null;
             });
         });
     };
@@ -84,8 +91,15 @@ const controller = ((gameboard, view) => {
         //console.log(column);
     }
 
+    const reset = () => {
+        _currentPlayer = _playerOne;
+        gameboard.reset();
+        view.update(gameboard, _playerColorMap);
+    }
+
     return {
-        play
+        play,
+        reset
     };
 })(gameboard, view);
 
@@ -97,3 +111,5 @@ view.columns.forEach((column, index) => {
         });
     });
 });
+
+document.getElementById('reset').addEventListener('click', controller.reset);
