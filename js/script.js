@@ -1,6 +1,7 @@
-const Player = (id, color) => {
+const Player = (id, color, type) => {
     const _id = id;
     const _color = color;
+    const _isHuman = type === 'human';
 
     const getId = () => {
         return _id;
@@ -9,9 +10,15 @@ const Player = (id, color) => {
     const getColor = () => {
         return _color;
     }
+
+    const isHuman = () => {
+        return _isHuman;
+    }
+
     return {
         getId,
-        getColor
+        getColor,
+        isHuman
     };
 };
 
@@ -33,12 +40,22 @@ const gameboard = (() => {
         return Boolean(_board[column][_board[column].length - 1]);
     };
 
+    const getAvailableMoves = () => {
+        const moves = [];
+        for (let column = 0; column < _board.length; column++) {
+            if (!isColumnFull(column)) {
+                moves.push(column);
+            }
+        }
+        return moves;
+    };
+
     const markSpace = (column, player) => {
         let row = _board[column].indexOf(0);
         _board[column][row] = player.getId();
     };
 
-    const checkWinner = () => {
+    const getWinner = () => {
         //hard coding initially
         const winningBoards = [
             [
@@ -477,8 +494,9 @@ const gameboard = (() => {
     return {
         getBoard,
         isColumnFull,
+        getAvailableMoves,
         markSpace,
-        checkWinner,
+        getWinner,
         reset
     };
 })();
@@ -502,36 +520,51 @@ const view = (() => {
 })();
 
 const controller = ((gameboard, view) => {
-    const _playerOne = Player(1, 'yellow');
-    const _playerTwo = Player(2, 'red');
+    const _playerOne = Player(1, 'yellow', 'human');
+    const _playerTwo = Player(2, 'red', 'computer');
     const _playerColorMap = new Map([
         [_playerOne.getId(), _playerOne.getColor()],
         [_playerTwo.getId(), _playerTwo.getColor()]
     ]);
-    let _currentPlayer = _playerOne;
-    let _gameOver = false;
+
+    let _gameOver;
+    let _currentPlayer;
+
+    const _initialize = () => {
+        _gameOver = false;
+        _currentPlayer = _playerOne;
+    };
 
     const play = column => {
         if (!_gameOver && !gameboard.isColumnFull(column)) {
             gameboard.markSpace(column, _currentPlayer);
             view.update(gameboard, _playerColorMap);
 
-            const winner = gameboard.checkWinner();
-            if (!winner) {
+            const winner = gameboard.getWinner();
+            const availableMoves = gameboard.getAvailableMoves();
+            if (!winner && availableMoves.length) {
+                //next turn
                 _currentPlayer = (_currentPlayer === _playerOne) ? _playerTwo : _playerOne;
+                if (!_currentPlayer.isHuman()) {
+                    //AI play turn
+                    const move = Math.floor(Math.random() * availableMoves.length);
+                    play(availableMoves[move]);
+                }
             } else {
+                //end game
                 _gameOver = true;
                 console.log(winner);
             }
         }
-    }
+    };
 
     const reset = () => {
-        _gameOver = false;
-        _currentPlayer = _playerOne;
         gameboard.reset();
         view.update(gameboard, _playerColorMap);
-    }
+        _initialize();
+    };
+
+    _initialize();
 
     return {
         play,
