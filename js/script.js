@@ -51,9 +51,18 @@ const gameboard = (() => {
     };
 
     const markSpace = (column, player) => {
-        let row = _board[column].indexOf(0);
-        _board[column][row] = player.getId();
+        const row = _board[column].indexOf(0);
+        _board[column][row] = player;
     };
+
+    const clearSpace = (column) => {
+        let row = _board[column].indexOf(0);
+        
+        if (row === 0) return;
+        else if (row === -1) row = _board[column].length;
+
+        _board[column][row - 1] = 0;
+    }
 
     const getWinner = () => {
         //hard coding initially
@@ -496,6 +505,7 @@ const gameboard = (() => {
         isColumnFull,
         getAvailableMoves,
         markSpace,
+        clearSpace,
         getWinner,
         reset
     };
@@ -519,7 +529,73 @@ const view = (() => {
     };
 })();
 
-const controller = ((gameboard, view) => {
+const ai = (() => {
+    const _columnOrder = [3,2,4,1,5,0,6];
+
+    const findBestMove = (board) => {
+        let bestScore = Infinity;
+        let bestMove;
+
+        const availableMoves = board.getAvailableMoves();
+        const movesSorted = _columnOrder.filter(move => availableMoves.includes(move));
+
+        movesSorted.forEach(move => {
+            board.markSpace(move, 2);
+            let score = _minimax(board, 0, -Infinity, Infinity, true);
+            board.clearSpace(move);
+            
+            if (score < bestScore) {
+                bestScore = score;
+                bestMove = move;
+            }
+            //console.log({score, bestScore, move, bestMove});
+        });
+        return bestMove;
+    };
+
+    const _minimax = (board, depth, alpha, beta, isMaximizing) => {
+        // check if end game
+        const winner = board.getWinner();
+        //hardcode computer as minimizing
+        if (winner === 1) return 100 - depth;
+        else if (winner === 2) return -100 + depth;
+
+        const availableMoves = board.getAvailableMoves();
+        if (!availableMoves.length || depth === 8) return 0;
+
+        const movesSorted = _columnOrder.filter(move => availableMoves.includes(move));
+
+        //maximizing
+        if (isMaximizing) {
+            let maxScore = -Infinity;
+            for (let i = 0; i < movesSorted.length; i++) {
+                board.markSpace(movesSorted[i], 1);
+                const score = _minimax(board, depth+1, alpha, beta, false);
+                board.clearSpace(movesSorted[i]);
+                maxScore = Math.max(maxScore, score);
+                alpha = Math.max(alpha, score);
+
+                if (beta <= alpha) break;
+            }
+            return maxScore;
+        } else {
+            let minScore = Infinity;
+            for (let i = 0; i < movesSorted.length; i++) {
+                board.markSpace(movesSorted[i], 2);
+                const score = _minimax(board, depth+1, alpha, beta, true);
+                board.clearSpace(movesSorted[i]);
+                minScore = Math.min(minScore, score);
+                beta = Math.min(beta, score);
+
+                if (beta <= alpha) break;
+            }
+            return minScore;
+        }
+    }
+    return {findBestMove};
+})();
+
+const controller = ((gameboard, view, ai) => {
     const _playerOne = Player(1, 'yellow', 'human');
     const _playerTwo = Player(2, 'red', 'computer');
     const _playerColorMap = new Map([
@@ -537,7 +613,7 @@ const controller = ((gameboard, view) => {
 
     const play = column => {
         if (!_gameOver && !gameboard.isColumnFull(column)) {
-            gameboard.markSpace(column, _currentPlayer);
+            gameboard.markSpace(column, _currentPlayer.getId());
             view.update(gameboard, _playerColorMap);
 
             const winner = gameboard.getWinner();
@@ -547,8 +623,9 @@ const controller = ((gameboard, view) => {
                 _currentPlayer = (_currentPlayer === _playerOne) ? _playerTwo : _playerOne;
                 if (!_currentPlayer.isHuman()) {
                     //AI play turn
-                    const move = Math.floor(Math.random() * availableMoves.length);
-                    play(availableMoves[move]);
+                    //const move = Math.floor(Math.random() * availableMoves.length);
+                    //play(availableMoves[move]);
+                    play(ai.findBestMove(gameboard));
                 }
             } else {
                 //end game
@@ -570,7 +647,7 @@ const controller = ((gameboard, view) => {
         play,
         reset
     };
-})(gameboard, view);
+})(gameboard, view, ai);
 
 //Event Handlers
 view.columns.forEach((column, index) => {
