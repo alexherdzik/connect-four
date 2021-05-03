@@ -512,19 +512,33 @@ const gameboard = (() => {
 })();
 
 const view = (() => {
+    const _scoreboard = document.getElementById('scoreboard');
     const _gameboard = document.getElementById('gameboard');
     const columns = _gameboard.querySelectorAll('.column');
+    const _discs = (() => {
+        const discs = [];
+        columns.forEach(column => {
+            discs.push(column.querySelectorAll('.disc'));
+        });
+        return discs;
+    })();
+
+    const setScoreboard = (msg, color) => {
+        _scoreboard.textContent = msg;
+        _scoreboard.style.backgroundColor = color;
+    }
 
     const update = (gameboard, map) => {
         gameboard.getBoard().forEach((column, colIndex) => {
             column.forEach((row, rowIndex) => {
-                columns[colIndex].querySelectorAll('.space')[rowIndex].style.backgroundColor = map.has(row) ? map.get(row) : null;
+                _discs[colIndex][rowIndex].style.backgroundColor = map.has(row) ? map.get(row) : null;
             });
         });
     };
 
     return {
         columns,
+        setScoreboard,
         update
     };
 })();
@@ -609,6 +623,7 @@ const controller = ((gameboard, view, ai) => {
     const _initialize = () => {
         _gameOver = false;
         _currentPlayer = _playerOne;
+        view.setScoreboard(`Player ${_currentPlayer.getId()}'s turn`, _currentPlayer.getColor());
     };
 
     const play = column => {
@@ -621,16 +636,17 @@ const controller = ((gameboard, view, ai) => {
             if (!winner && availableMoves.length) {
                 //next turn
                 _currentPlayer = (_currentPlayer === _playerOne) ? _playerTwo : _playerOne;
+                view.setScoreboard(`Player ${_currentPlayer.getId()}'s turn`, _currentPlayer.getColor());
                 if (!_currentPlayer.isHuman()) {
                     //AI play turn
                     //const move = Math.floor(Math.random() * availableMoves.length);
                     //play(availableMoves[move]);
-                    play(ai.findBestMove(gameboard));
+                    setTimeout(() => play(ai.findBestMove(gameboard)), 500);
                 }
             } else {
                 //end game
                 _gameOver = true;
-                console.log(winner);
+                view.setScoreboard(`Player ${_currentPlayer.getId()} wins!`, _currentPlayer.getColor());
             }
         }
     };
