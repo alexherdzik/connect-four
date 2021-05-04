@@ -648,7 +648,8 @@ const controller = ((gameboard, view, ai) => {
             } else {
                 //end game
                 _gameOver = true;
-                view.setScoreboard(`Player ${_currentPlayer.getId()} wins!`, _currentPlayer.getColor());
+                if (winner) view.setScoreboard(`Player ${_currentPlayer.getId()} wins!`, _currentPlayer.getColor());
+                else view.setScoreboard('Draw!', null);
             }
         }
     };
