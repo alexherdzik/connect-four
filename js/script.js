@@ -512,7 +512,8 @@ const gameboard = (() => {
 })();
 
 const view = (() => {
-    const _scoreboard = document.getElementById('scoreboard');
+    const _message = document.getElementById('message');
+    const _indicator = document.getElementById('indicator');
     const _gameboard = document.getElementById('gameboard');
     const columns = _gameboard.querySelectorAll('.column');
     const _discs = (() => {
@@ -524,8 +525,9 @@ const view = (() => {
     })();
 
     const setScoreboard = (msg, color) => {
-        _scoreboard.textContent = msg;
-        _scoreboard.style.backgroundColor = color;
+        _message.textContent = msg;
+        _indicator.style.backgroundColor = color;
+        _indicator.style.transform = _indicator.style.transform ? null : "rotateY(180deg)";
     }
 
     const update = (gameboard, map) => {
