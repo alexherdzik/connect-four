@@ -1936,7 +1936,7 @@ const ai = (() => {
         else if (winner === 2) return -100 + depth;
 
         const availableMoves = board.getAvailableMoves();
-        if (!availableMoves.length || depth === 9) return 0;
+        if (!availableMoves.length || depth === 8) return 0;
 
         const movesSorted = _columnOrder.filter(move => availableMoves.includes(move));
 
